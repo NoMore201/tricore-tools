@@ -1,0 +1,7 @@
+**/*.tar.xz
+**/*.tar.xz.sig
+**/*.tar.gz
+**/*pkg.tar.zst
+
+tricore-gdb/src
+tricore-gdb/pkg
