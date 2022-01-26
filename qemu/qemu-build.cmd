@@ -37,10 +37,10 @@ cd %startupdir%
 set bashcmd=%MSYS2_PATH%\usr\bin\bash.exe
 
 rem Build qemu
-
 cd qemu
-rem for /f "tokens=* USEBACKQ" %%i in (`%MSYS2_PATH%\usr\bin\cygpath -u %qemudir%`) do set UNIX_DIR=%%i
+rem Preserve working directory inside bash shell
 set CHERE_INVOKING=yes
+rem Use UCRT64 environment
 set MSYSTEM=UCRT64
 %bashcmd% -lc "./configure --ninja=/ucrt64/bin/ninja --meson=/ucrt64/bin/meson --target-list=tricore-softmmu --enable-tools --enable-lzo --enable-sdl --enable-gtk --enable-bzip2 --disable-capstone"
 %bashcmd% -lc "cd build && ninja"
