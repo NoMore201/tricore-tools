@@ -1,14 +1,15 @@
-From f1d156db02c2b0a673b8812024bf7afabeb99403 Mon Sep 17 00:00:00 2001
+From 32f912d40cad16c87acb70d220769ecb02926a4e Mon Sep 17 00:00:00 2001
 From: Domenico Iezzi <domenico.iezzi1@schindler.com>
-Date: Tue, 25 Jan 2022 14:31:04 +0100
-Subject: [PATCH] Rebase tricore architecture implementation to 11.2
+Date: Wed, 26 Jan 2022 08:55:35 +0100
+Subject: [PATCH] Rebase tricore implementation from 10.0.50 to 11.2
 
-This commit aims at rebasing the tricore architecture implementation
-found at [1] to latest release tag gdb-11.2-release. Some fixes
-were implemented to adapt the code to newer internal API.
+This commit aims at rebasing tricore architecture support found
+at repository [1] onto the latest release tag 11.2. While the
+origin of that repository is unknown, code seems to be contributed
+by Hightec developers [2].
 
-While the origin of the repo [1] is unknown, code contribution seems
-to come from Infineon developers, and the code is release under the GPL.
+[1] https://github.com/Gigallith/gdb-tricore
+[2] https://hightec-rt.com/en/
 
 Signed-off-by: Domenico Iezzi <domenico.iezzi1@schindler.com>
 ---
@@ -17,6 +18,7 @@ Signed-off-by: Domenico Iezzi <domenico.iezzi1@schindler.com>
  bfd/archures.c                       |    13 +
  bfd/bfd-in2.h                        |   103 +
  bfd/config.bfd                       |     5 +
+ bfd/configure                        |     1 +
  bfd/configure.ac                     |     1 +
  bfd/cpu-tricore.c                    |   328 +
  bfd/elf32-tricore.c                  |  2115 ++++++
@@ -25,6 +27,7 @@ Signed-off-by: Domenico Iezzi <domenico.iezzi1@schindler.com>
  bfd/reloc.c                          |   176 +
  bfd/targets.c                        |     3 +
  binutils/readelf.c                   |     5 +
+ config.sub                           |     4 +
  gas/Makefile.am                      |     2 +
  gas/config/tc-tricore.c              | 10098 +++++++++++++++++++++++++
  gas/config/tc-tricore.h              |   151 +
@@ -42,12 +45,14 @@ Signed-off-by: Domenico Iezzi <domenico.iezzi1@schindler.com>
  gdb/tricore-tdep.h                   |    98 +
  include/elf/tricore.h                |   210 +
  include/opcode/tricore.h             |   459 ++
+ ld/Makefile.in                       |     2 +
  ld/configure.tgt                     |     6 +
  ld/emulparams/elf32tricore.sh        |    26 +
  ld/emulparams/elf32tricoreel.sh      |     2 +
  ld/scripttempl/elftricore.sc         |   469 ++
  opcodes/Makefile.am                  |     2 +
  opcodes/Makefile.in                  |     4 +
+ opcodes/configure                    |     1 +
  opcodes/configure.ac                 |     1 +
  opcodes/disassemble.c                |     6 +
  opcodes/disassemble.h                |     1 +
@@ -55,7 +60,7 @@ Signed-off-by: Domenico Iezzi <domenico.iezzi1@schindler.com>
  opcodes/tricore-dis.c                |  1948 +++++
  opcodes/tricore-opc.c                |  2497 ++++++
  readline/readline/support/config.sub |     5 +
- 43 files changed, 19787 insertions(+), 2 deletions(-)
+ 47 files changed, 19795 insertions(+), 2 deletions(-)
  create mode 100644 bfd/cpu-tricore.c
  create mode 100644 bfd/elf32-tricore.c
  create mode 100644 gas/config/tc-tricore.c
@@ -329,6 +334,18 @@ index 30087e3b8f8..779d6116211 100644
    ft32*-*-*)
      targ_defvec=ft32_elf32_vec
      ;;
+diff --git a/bfd/configure b/bfd/configure
+index daa51244369..b9348658f74 100755
+--- a/bfd/configure
++++ b/bfd/configure
+@@ -13483,6 +13483,7 @@ do
+     tilegx_elf64_be_vec)	 tb="$tb elf64-tilegx.lo elfxx-tilegx.lo elf64.lo $elf" ; target_size=64 ;;
+     tilegx_elf64_le_vec)	 tb="$tb elf64-tilegx.lo elfxx-tilegx.lo elf64.lo $elf" ; target_size=64 ;;
+     tilepro_elf32_vec)		 tb="$tb elf32-tilepro.lo elf32.lo $elf" ;;
++    tricore_elf32_le_vec)  tb="$tb elf32-tricore.lo elf32.lo $elf" ;;
+     v800_elf32_vec)		 tb="$tb elf32-v850.lo elf32.lo $elf" ;;
+     v850_elf32_vec)		 tb="$tb elf32-v850.lo elf32.lo $elf" ;;
+     vax_aout_1knbsd_vec)	 tb="$tb vax1knetbsd.lo aout32.lo" ;;
 diff --git a/bfd/configure.ac b/bfd/configure.ac
 index 07a75ed1626..434cdcac281 100644
 --- a/bfd/configure.ac
@@ -3129,6 +3146,28 @@ index af10bcd0e17..e0f60e42c4d 100644
  	case EM_WEBASSEMBLY:
  	  rtype = elf_wasm32_reloc_type (type);
  	  break;
+diff --git a/config.sub b/config.sub
+index 7384e9198b4..8ed318ca1ac 100755
+--- a/config.sub
++++ b/config.sub
+@@ -997,6 +997,9 @@ case $cpu-$vendor in
+ 	orion-unknown)
+ 		vendor=highlevel
+ 		;;
++	tricore-unknown)
++		vendor=infineon
++		;;
+ 	xps-unknown | xps100-unknown)
+ 		cpu=xps100
+ 		vendor=honeywell
+@@ -1248,6 +1251,7 @@ case $cpu-$vendor in
+ 			| tahoe \
+ 			| thumbv7* \
+ 			| tic30 | tic4x | tic54x | tic55x | tic6x | tic80 \
++			| tricore \
+ 			| tron \
+ 			| ubicom32 \
+ 			| v70 | v850 | v850e | v850e1 | v850es | v850e2 | v850e2v3 \
 diff --git a/gas/Makefile.am b/gas/Makefile.am
 index 34190e78b8c..c09e738121d 100644
 --- a/gas/Makefile.am
@@ -15291,6 +15330,19 @@ index 00000000000..0c0cd74d3f1
 +
 +#endif
 \ No newline at end of file
+diff --git a/ld/Makefile.in b/ld/Makefile.in
+index ef2e99e08da..a2c77bf7398 100644
+--- a/ld/Makefile.in
++++ b/ld/Makefile.in
+@@ -758,6 +758,8 @@ ALL_EMULATION_SOURCES = \
+ 	eelf32tilegx.c \
+ 	eelf32tilegx_be.c \
+ 	eelf32tilepro.c \
++	eelf32tricoreel.c \
++	eelf32tricore.c \
+ 	eelf32vax.c \
+ 	eelf32visium.c \
+ 	eelf32xc16x.c \
 diff --git a/ld/configure.tgt b/ld/configure.tgt
 index 6205d7c9872..eb4bfc41b26 100644
 --- a/ld/configure.tgt
@@ -15858,6 +15910,18 @@ index 42c15f00d30..52cc9473e7c 100644
  @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/v850-dis.Plo@am__quote@
  @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/v850-opc.Plo@am__quote@
  @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/vax-dis.Plo@am__quote@
+diff --git a/opcodes/configure b/opcodes/configure
+index 3513e408ce1..2a1b705ac69 100755
+--- a/opcodes/configure
++++ b/opcodes/configure
+@@ -12280,6 +12280,7 @@ if test x${all_targets} = xfalse ; then
+ 	bfd_tic6x_arch)		ta="$ta tic6x-dis.lo" ;;
+ 	bfd_tilegx_arch)	ta="$ta tilegx-dis.lo tilegx-opc.lo" ;;
+ 	bfd_tilepro_arch)	ta="$ta tilepro-dis.lo tilepro-opc.lo" ;;
++	bfd_tricore_arch)	ta="$ta tricore-dis.lo tricore-opc.lo" ;;
+ 	bfd_v850_arch)		ta="$ta v850-opc.lo v850-dis.lo" ;;
+ 	bfd_v850e_arch)		ta="$ta v850-opc.lo v850-dis.lo" ;;
+ 	bfd_v850ea_arch)	ta="$ta v850-opc.lo v850-dis.lo" ;;
 diff --git a/opcodes/configure.ac b/opcodes/configure.ac
 index e564f067334..7c494459ab2 100644
 --- a/opcodes/configure.ac
@@ -20400,5 +20464,5 @@ index 7384e9198b4..b5e58d1212d 100755
  			| ubicom32 \
  			| v70 | v850 | v850e | v850e1 | v850es | v850e2 | v850e2v3 \
 -- 
-2.30.2.windows.1
+2.34.1
 

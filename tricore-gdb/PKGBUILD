@@ -16,7 +16,6 @@ depends=("${MINGW_PACKAGE_PREFIX}-expat"
          "${MINGW_PACKAGE_PREFIX}-libiconv"
          "${MINGW_PACKAGE_PREFIX}-libssp"
          "${MINGW_PACKAGE_PREFIX}-ncurses"
-         "${MINGW_PACKAGE_PREFIX}-python"
          "${MINGW_PACKAGE_PREFIX}-readline"
          "${MINGW_PACKAGE_PREFIX}-xxhash"
          "${MINGW_PACKAGE_PREFIX}-zlib")
@@ -31,52 +30,30 @@ makedepends=("${MINGW_PACKAGE_PREFIX}-gmp"
              "${MINGW_PACKAGE_PREFIX}-cc")
 options=('staticlibs' '!distcc' '!ccache')
 source=(https://github.com/bminor/binutils-gdb/archive/refs/tags/gdb-11.2-release.tar.gz
-        '0001-gdb-tui-Fix-breakpoint-display-functionality.patch'
         '0001-Workaround-performance-regression-in-info-func-var-t.patch'
         '0002-Fix-using-gnu-print.patch'
-        '0003-configure-Disable-static-linking-with-standard-libs.patch'
-        '0004-Python-Configure-path-fixes.patch'
         '0005-W32-Always-check-USERPROFILE-if-HOME-is-not-set.patch'
-        '0006-Rebase-tricore-architecture-implementation-to-11-2.patch')
+        '0006-Rebase-tricore-implementation-from-10.0.50-to-11.2.patch')
 validpgpkeys=('F40ADB902B24264AA42E50BF92EDB04BFF325CF3')
 sha256sums=('a47afff8c0cb54d12b2f3066ef200e1014c89e94470dea74d9aa53ee20d1d6d3'
-            'a8001dad47e4016dbd0843356f79ba562f152e68362e73a700f644166eccbba8'
             '428cda7dcc107c236225ae89704390b0f1e70c276b5ca6b1741988f384b21d62'
             'c60e867fb74f7985b5ac5337a07cc697b4a4ffe19fb6e52f7c377e29c8413a4a'
-            '0eb291cd81f7392610d16a83f436a30d3384a99661c6b6ffd1bfb243d5aee6dd'
-            '7ef9c6e238a4e232bc689e15e48ee2d8045542c47f0b156d9fc92a7c14e6757e'
             '39d1cb2a1be8d60c16404ad96882f10cd3ebd942d8b7af62a7416a230a50de93'
-            '29d7145545ddd1d8b9af82d75fb5406d5add503b138d1b4e0e589fadc5c6e743')
+            '16de472558542ce121b8894625a1b5cc999bafff345b4126db54fa82e117e91e')
 
 prepare() {
   mv ${srcdir}/binutils-${_realname}-${_realname}-${pkgver}-release \
     ${srcdir}/${_realname}-${pkgver}
   cd ${srcdir}/${_realname}-${pkgver}
 
-  # https://sourceware.org/bugzilla/show_bug.cgi?id=28483
-  #patch -p1 -i ${srcdir}/0001-gdb-tui-Fix-breakpoint-display-functionality.patch
-
   # https://sourceware.org/bugzilla/show_bug.cgi?id=15412
-  echo 0001-Workaround-performance-regression-in-info-func-var-t.patch
   patch -p1 -i ${srcdir}/0001-Workaround-performance-regression-in-info-func-var-t.patch
 
-  #echo 0002-Fix-using-gnu-print.patch
-  #patch -p1 -i ${srcdir}/0002-Fix-using-gnu-print.patch
+  patch -p1 -i ${srcdir}/0002-Fix-using-gnu-print.patch
 
-  # https://sourceware.org/bugzilla/show_bug.cgi?id=21078
-  echo 0003-configure-Disable-static-linking-with-standard-libs.patch
-  patch -p1 -i ${srcdir}/0003-configure-Disable-static-linking-with-standard-libs.patch
-
-  # echo 0004-Python-Configure-path-fixes.patch
-  # patch -p1 -i ${srcdir}/0004-Python-Configure-path-fixes.patch
-  echo 0005-W32-Always-check-USERPROFILE-if-HOME-is-not-set.patch
   patch -p1 -i ${srcdir}/0005-W32-Always-check-USERPROFILE-if-HOME-is-not-set.patch
 
-  # Note: using -t flag since original patch contains a change to binutils/readelf.c
-  # which is not present in the source tar downloaded from this PKGBUILD (probably
-  # binutils package is built separately)
-  echo 0006-Rebase-tricore-architecture-implementation-to-11-2.patch
-  patch -p1 -i ${srcdir}/0006-Rebase-tricore-architecture-implementation-to-11-2.patch
+  patch -p1 -i ${srcdir}/0006-Rebase-tricore-implementation-from-10.0.50-to-11.2.patch
 
   # hack! - libiberty configure tests for header files using "$CPP $CPPFLAGS"
   sed -i "/ac_cpp=/s/\$CPPFLAGS/\$CPPFLAGS -O2/" libiberty/configure
@@ -105,10 +82,9 @@ do_build() {
   ../${_realname}-${pkgver}/configure \
     --build=${MINGW_CHOST} \
     --host=${MINGW_CHOST} \
-    --target=${MINGW_CHOST} \
+    --target=tricore \
     --prefix=${MINGW_PREFIX} \
-    --enable-targets=all \
-    --enable-64-bit-bfd \
+    --enable-targets=tricore \
     --disable-werror \
     --disable-win32-registry \
     --disable-rpath \
