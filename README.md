@@ -22,4 +22,5 @@ Tricore support in QEMU is already available but needs to be enabled at compile 
 
 - For GDB and QEMU license, refer to the upstream project
 - For MSYS2 pkgbuild and patches, refer to the upstream project
-- Special note about tricore GDB patch: code is licensed under the GPLv3
+- Special note about tricore GDB patch: code is licensed under the GPLv3 by the original author
+- All the code contributed from this repo is licensed with GPLv3
