@@ -1,6 +1,6 @@
-# Tricore GDB
+# Tricore Tools
 
-This repository aims at providing a version of GDB and QEMU with support for the Tricore architecture.
+This repository contains patches and script to build GDB and QEMU with support for the Tricore architecture.
 
 GDB Implementation was taken from [this repository](https://github.com/Gigallith/gdb-tricore) and organized
 into a patch that can be applied to the latest release tag (11.2 at the time of writing).
@@ -17,3 +17,9 @@ Tricore support in QEMU is already available but needs to be enabled at compile 
 
 - **tricore-gdb** contains the PKGBUILD and the patches used to build tricore-gdb uwing MSYS2 framework
 - **qemu** contains scripts and documentation to build and setup QEMU with tricore support
+
+## License
+
+- For GDB and QEMU license, refer to the upstream project
+- For MSYS2 pkgbuild and patches, refer to the upstream project
+- Special note about tricore GDB patch: code is licensed under the GPLv3
